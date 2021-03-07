@@ -22,9 +22,9 @@ export class RESTApi {
         this.serverId = serverId;
         this.app.use(express.json());
 
-        this.app.post(`/${this.serverId}/sendMessage/:uid`, (req: express.Request, res: express.Response) => { this.sendMessageRequest(req,res)});
-        this.app.put(`/${this.serverId}/broadcast`, (req: express.Request, res: express.Response) => { this.broadcast(req,res)});
-        this.app.get(`/${this.serverId}/health`, (req: express.Request, res: express.Response) => { this.healthCheck(req,res)});
+        this.app.post(`/sendMessage/:uid`, (req: express.Request, res: express.Response) => { this.sendMessageRequest(req,res)});
+        this.app.put(`/broadcast`, (req: express.Request, res: express.Response) => { this.broadcast(req,res)});
+        this.app.get(`/health`, (req: express.Request, res: express.Response) => { this.healthCheck(req,res)});
     }
 
     public async init() {
@@ -33,8 +33,8 @@ export class RESTApi {
             this.server = this.app.listen(PORT, () => {
                 let host = ip.address(null, "ipv4");
                 let port = this.server.address().port;
-                this.log.info(entity, `Server running on: http://${host}:${PORT}/${this.serverId}`);
-                this.restApiAddress = `http://${host}:${PORT}/${this.serverId}`;
+                this.log.info(entity, `Server running on: http://${host}:${PORT}`);
+                this.restApiAddress = `http://${host}:${PORT}`;
                 resolve(true);
             });
         });
