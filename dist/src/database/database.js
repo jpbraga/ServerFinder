@@ -19,7 +19,7 @@ class Database {
     constructor() {
         this.client = null;
         this.log = log_services_1.LogService.getInstnce();
-        this.host = environment_1.Environment.getValue(env_vars_1.ENV_VARS.REDIS_HOST, "localhost");
+        this.host = environment_1.Environment.getValue(env_vars_1.ENV_VARS.REDIS_HOST, null);
         this.port = parseInt(environment_1.Environment.getValue(env_vars_1.ENV_VARS.REDIS_PORT, "6379"));
         this.password = environment_1.Environment.getValue(env_vars_1.ENV_VARS.REDIS_PASSWORD);
     }

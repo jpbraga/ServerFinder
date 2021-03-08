@@ -5,6 +5,8 @@ import { LogService } from '../util/log.services';
 import { Guid } from '../util/guid';
 import { EventMessageCallback } from '../interfaces/event.message.callback';
 import { REST_EVENT_TYPES } from './consts/rest.event.types';
+import { Environment } from '../util/environment';
+import { ENV_VARS } from '../util/consts/env.vars';
 
 const entity: string = "RESTApi";
 const PORT = 3000;
@@ -15,15 +17,15 @@ export class RESTApi {
     private log: LogService;
     private eventListeners = {};
     private restApiAddress: string = null;
-    private serverId: string = null;
+    private uidKey:string = Environment.getValue(ENV_VARS.JWT_IDENTIFIER, "uid");
 
-    constructor(serverId: string) {
+    constructor() {
         this.log = LogService.getInstnce();
-        this.serverId = serverId;
         this.app.use(express.json());
 
         this.app.post(`/sendMessage/:uid`, (req: express.Request, res: express.Response) => { this.sendMessageRequest(req,res)});
         this.app.put(`/broadcast`, (req: express.Request, res: express.Response) => { this.broadcast(req,res)});
+        this.app.get(`/probe`, (req: express.Request, res: express.Response) => { this.probe(req,res)});
         this.app.get(`/health`, (req: express.Request, res: express.Response) => { this.healthCheck(req,res)});
     }
 
@@ -54,10 +56,11 @@ export class RESTApi {
         const validation = this.sendMessageRequestSchema(req, res);
         if (!validation.isValid) res.send(validation);
         else {
-            this.notifyEventListeners(REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, {
-                uid: req.params.uid,
+            let payload = {
                 payload: req.body.payload
-            });
+            };
+            payload[this.uidKey] = req.params.uid;
+            this.notifyEventListeners(REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, payload);
             res.send(validation);
         }
     }
@@ -74,16 +77,21 @@ export class RESTApi {
         if (!validation.isValid) res.send(validation);
         else {
             let data = JSON.parse(req.body.payload);
-            this.notifyEventListeners(REST_EVENT_TYPES.BROADCAST, {
-                payload: req.body.payload,
-                uid: data.uid
-            });
+            let payload = {
+                payload: req.body.payload
+            }
+            payload[this.uidKey] = data[this.uidKey];
+            this.notifyEventListeners(REST_EVENT_TYPES.BROADCAST, payload);
             res.send(validation);
         }
     }
 
     private healthCheck(req, res) {
         res.send(200);
+    }
+
+    private async probe(req, res) {
+        this.notifyEventListeners(REST_EVENT_TYPES.PROBE, {res: res});
     }
 
     // helper functions

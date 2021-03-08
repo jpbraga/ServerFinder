@@ -32,7 +32,7 @@ if (result.error) {
 }
 let serverId = guid_1.Guid.generateGuid();
 let db = new database_1.Database();
-let rest = new rest_1.RESTApi(serverId);
+let rest = new rest_1.RESTApi();
 let en = new event_notification_1.EventNotification();
 let bs = new business_layer_1.BusinessLayer(db, en, rest, serverId);
 let server = new Initializer_1.Initializer(db, rest, bs);

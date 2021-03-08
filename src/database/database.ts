@@ -13,7 +13,7 @@ export class Database {
 
     constructor() {
         this.log = LogService.getInstnce();
-        this.host = Environment.getValue(ENV_VARS.REDIS_HOST, "localhost");
+        this.host = Environment.getValue(ENV_VARS.REDIS_HOST, null);
         this.port = parseInt(Environment.getValue(ENV_VARS.REDIS_PORT, "6379"));
         this.password = Environment.getValue(ENV_VARS.REDIS_PASSWORD)
     }

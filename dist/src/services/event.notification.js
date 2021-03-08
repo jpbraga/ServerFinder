@@ -41,10 +41,44 @@ class EventNotification {
                     resolve(res);
                 });
                 req.on('error', (e) => {
+                    this.log.error(entity, `Error requesting a ${method} at ${url} - ${e}`);
                     reject(e.message);
                 });
                 if (content)
                     req.write(JSON.stringify(content));
+                req.end();
+            });
+        });
+    }
+    get(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const resourceURL = new URL(url);
+            this.log.debug(entity, `Requesting a GET at ${url}`);
+            return new Promise((resolve, reject) => {
+                if (!url) {
+                    this.log.error(entity, `The HOST for the GET method cannot be null`);
+                    reject(`The HOST for the GET method cannot be null`);
+                }
+                const options = {
+                    hostname: resourceURL.hostname,
+                    path: resourceURL.pathname,
+                    port: resourceURL.port,
+                    timeout: environment_1.Environment.getValue(env_vars_1.ENV_VARS.REST_REQUEST_TIMEOUT, 15000),
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                };
+                const req = http.request(options, res => {
+                    res.setEncoding('utf8');
+                    res.on('data', d => {
+                        resolve(d);
+                    });
+                });
+                req.on('error', error => {
+                    this.log.error(entity, `Error requesting a GET at ${url} - ${error}`);
+                    reject(error);
+                });
                 req.end();
             });
         });

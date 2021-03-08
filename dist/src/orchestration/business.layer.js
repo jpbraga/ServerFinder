@@ -22,19 +22,20 @@ class BusinessLayer {
         this.en = en;
         this.rest = rest;
         this.serverId = serverId;
+        this.uidKey = environment_1.Environment.getValue(env_vars_1.ENV_VARS.JWT_IDENTIFIER, "uid");
         this.log = log_services_1.LogService.getInstnce();
         this.log.info(entity, `Server reference id is ${this.serverId}`);
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
             this.rest.registerEventListener((event) => __awaiter(this, void 0, void 0, function* () {
-                this.processRESTApiEvents(event.type, event.content.payload, event.content.uid);
+                this.processRESTApiEvents(event.type, event.content.payload, event.content[this.uidKey], event.content.res);
             }));
             this.log.debug(entity, 'RESTApi event listener registered!');
             this.log.info(entity, 'Business layer ready!');
         });
     }
-    processRESTApiEvents(type, content, sender) {
+    processRESTApiEvents(type, content, sender, res) {
         return __awaiter(this, void 0, void 0, function* () {
             switch (type) {
                 case rest_event_types_1.REST_EVENT_TYPES.BROADCAST:
@@ -49,16 +50,45 @@ class BusinessLayer {
                 case rest_event_types_1.REST_EVENT_TYPES.SEND_MESSAGE_REQUEST:
                     let serverAddress = yield this.db.find(sender);
                     if (!serverAddress) {
-                        this.log.error(entity, `The server address for the uid ${sender} could not be found`);
+                        this.log.error(entity, `The server address for the ${this.uidKey} ${sender} could not be found`);
                         return;
                     }
                     serverAddress += environment_1.Environment.getValue(env_vars_1.ENV_VARS.EVENT_MESSAGE_PATH, "/sendMessage");
                     serverAddress += `/${sender}`;
                     this.en.request(serverAddress, 'POST', { payload: content });
                     break;
+                case rest_event_types_1.REST_EVENT_TYPES.PROBE:
+                    let result = yield this.probe();
+                    res.status(200).send(result);
+                    break;
                 default:
                     break;
             }
+        });
+    }
+    probe() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let servers = yield this.db.getSet(REDIS_SERVERS_LIST);
+            let details = [];
+            let connectedClients = 0;
+            for (let server of servers) {
+                const address = JSON.parse(server).address;
+                try {
+                    const result = JSON.parse(yield this.en.get(address + '/probe'));
+                    connectedClients += result.connectedClients;
+                    details.push(result);
+                }
+                catch (err) {
+                    this.log.warn(entity, `Error probing server ${address}`);
+                }
+            }
+            return {
+                servers: details,
+                total: {
+                    servers: details.length,
+                    connectedClients: connectedClients
+                }
+            };
         });
     }
 }

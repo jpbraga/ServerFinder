@@ -1,7 +1,8 @@
-import WebSocketServer = require('websocket');
+import express = require('express');
 
 export interface MessageEventNotification {
     type: number,
     sender?: string,
-    content: any
+    content: any,
+    res?: express.Response
 }

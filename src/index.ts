@@ -14,7 +14,7 @@ if (result.error) {
 //Initialization
 let serverId: string = Guid.generateGuid();
 let db: Database = new Database();
-let rest: RESTApi = new RESTApi(serverId);
+let rest: RESTApi = new RESTApi();
 let en: EventNotification = new EventNotification();
 let bs: BusinessLayer = new BusinessLayer(db, en, rest, serverId);
 let server: Initializer = new Initializer(db, rest, bs);

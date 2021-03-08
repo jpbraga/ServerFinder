@@ -16,20 +16,22 @@ const ip = require("ip");
 const log_services_1 = require("../util/log.services");
 const guid_1 = require("../util/guid");
 const rest_event_types_1 = require("./consts/rest.event.types");
+const environment_1 = require("../util/environment");
+const env_vars_1 = require("../util/consts/env.vars");
 const entity = "RESTApi";
 const PORT = 3000;
 class RESTApi {
-    constructor(serverId) {
+    constructor() {
         this.app = express();
         this.server = null;
         this.eventListeners = {};
         this.restApiAddress = null;
-        this.serverId = null;
+        this.uidKey = environment_1.Environment.getValue(env_vars_1.ENV_VARS.JWT_IDENTIFIER, "uid");
         this.log = log_services_1.LogService.getInstnce();
-        this.serverId = serverId;
         this.app.use(express.json());
         this.app.post(`/sendMessage/:uid`, (req, res) => { this.sendMessageRequest(req, res); });
         this.app.put(`/broadcast`, (req, res) => { this.broadcast(req, res); });
+        this.app.get(`/probe`, (req, res) => { this.probe(req, res); });
         this.app.get(`/health`, (req, res) => { this.healthCheck(req, res); });
     }
     init() {
@@ -60,10 +62,11 @@ class RESTApi {
         if (!validation.isValid)
             res.send(validation);
         else {
-            this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, {
-                uid: req.params.uid,
+            let payload = {
                 payload: req.body.payload
-            });
+            };
+            payload[this.uidKey] = req.params.uid;
+            this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, payload);
             res.send(validation);
         }
     }
@@ -79,15 +82,21 @@ class RESTApi {
             res.send(validation);
         else {
             let data = JSON.parse(req.body.payload);
-            this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.BROADCAST, {
-                payload: req.body.payload,
-                uid: data.uid
-            });
+            let payload = {
+                payload: req.body.payload
+            };
+            payload[this.uidKey] = data[this.uidKey];
+            this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.BROADCAST, payload);
             res.send(validation);
         }
     }
     healthCheck(req, res) {
         res.send(200);
+    }
+    probe(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.PROBE, { res: res });
+        });
     }
     validateRequest(req, schema) {
         const options = {
