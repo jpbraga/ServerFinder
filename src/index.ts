@@ -6,11 +6,6 @@ import { RESTApi } from "./api/rest";
 import { BusinessLayer } from "./orchestration/business.layer";
 import { Guid } from "./util/guid";
 
-const result = dotenv.config();
-if (result.error) {
-  throw result.error;
-}
-
 //Initialization
 let serverId: string = Guid.generateGuid();
 let db: Database = new Database();

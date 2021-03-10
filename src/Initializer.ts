@@ -5,11 +5,6 @@ import { EventNotification } from "./services/event.notification";
 import { RESTApi } from "./api/rest";
 import { BusinessLayer } from "./orchestration/business.layer";
 
-const result = dotenv.config();
-if (result.error) {
-  throw result.error;
-}
-
 const entity: string = "Initializer";
 
 export class Initializer {
