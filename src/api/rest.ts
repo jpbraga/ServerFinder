@@ -25,6 +25,7 @@ export class RESTApi {
 
         this.app.post(`/sendMessage/:uid`, (req: express.Request, res: express.Response) => { this.sendMessageRequest(req,res)});
         this.app.put(`/broadcast`, (req: express.Request, res: express.Response) => { this.broadcast(req,res)});
+        this.app.put(`/disconnect`, (req: express.Request, res: express.Response) => { this.disconnectRequest(req,res)});
         this.app.get(`/probe`, (req: express.Request, res: express.Response) => { this.probe(req,res)});
         this.app.get(`/health`, (req: express.Request, res: express.Response) => { this.healthCheck(req,res)});
     }
@@ -61,6 +62,30 @@ export class RESTApi {
             };
             payload[this.uidKey] = req.params.uid;
             this.notifyEventListeners(REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, payload);
+            res.send(validation);
+        }
+    }
+
+    private disconnectRequestSchema(req, res): ValidationInterface {
+        const schema = Joi.object({
+            reason: Joi.string().required()
+        });
+        return this.validateRequest(req, schema);
+    }
+
+    private disconnectRequest(req, res) {
+        const validation = this.disconnectRequestSchema(req, res);
+        if (!validation.isValid) res.send(validation);
+        else {
+            let payload = {
+                reason: req.body.reason
+            };
+            if(!req.params.uid) {
+                res.send({ status: 500, isValid: false, message: `The uid must be informed as URL param after the endpoint address` });
+                return;
+            }
+            payload[this.uidKey] = req.params.uid;
+            this.notifyEventListeners(REST_EVENT_TYPES.DISCONNECT_REQUEST, payload);
             res.send(validation);
         }
     }

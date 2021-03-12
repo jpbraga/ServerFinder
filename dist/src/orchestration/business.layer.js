@@ -37,6 +37,7 @@ class BusinessLayer {
     }
     processRESTApiEvents(type, content, sender, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            let serverAddress = null;
             switch (type) {
                 case rest_event_types_1.REST_EVENT_TYPES.BROADCAST:
                     let servers = yield this.db.getSet(REDIS_SERVERS_LIST);
@@ -48,7 +49,7 @@ class BusinessLayer {
                     }
                     break;
                 case rest_event_types_1.REST_EVENT_TYPES.SEND_MESSAGE_REQUEST:
-                    let serverAddress = yield this.db.find(sender);
+                    serverAddress = yield this.db.find(sender);
                     if (!serverAddress) {
                         this.log.error(entity, `The server address for the ${this.uidKey} ${sender} could not be found`);
                         return;
@@ -56,6 +57,16 @@ class BusinessLayer {
                     serverAddress += environment_1.Environment.getValue(env_vars_1.ENV_VARS.EVENT_MESSAGE_PATH, "/sendMessage");
                     serverAddress += `/${sender}`;
                     this.en.request(serverAddress, 'POST', { payload: content });
+                    break;
+                case rest_event_types_1.REST_EVENT_TYPES.DISCONNECT_REQUEST:
+                    serverAddress = yield this.db.find(sender);
+                    if (!serverAddress) {
+                        this.log.error(entity, `The server address for the ${this.uidKey} ${sender} could not be found`);
+                        return;
+                    }
+                    serverAddress += environment_1.Environment.getValue(env_vars_1.ENV_VARS.EVENT_DISCONNECT_REQUEST, "/disconnect");
+                    serverAddress += `/${sender}`;
+                    this.en.request(serverAddress, 'POST', { payload: { reason: content.reason } });
                     break;
                 case rest_event_types_1.REST_EVENT_TYPES.PROBE:
                     let result = yield this.probe();

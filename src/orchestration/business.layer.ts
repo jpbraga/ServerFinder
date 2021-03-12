@@ -36,6 +36,7 @@ export class BusinessLayer {
 
     private async processRESTApiEvents(type: number, content: any, sender?: string, res?: express.Response) {
 
+        let serverAddress = null;
         switch (type) {
             case REST_EVENT_TYPES.BROADCAST:
                 let servers = await this.db.getSet(REDIS_SERVERS_LIST);
@@ -46,8 +47,9 @@ export class BusinessLayer {
                     this.en.request(serverAddress, 'PUT', { payload: content });
                 }
                 break;
+
             case REST_EVENT_TYPES.SEND_MESSAGE_REQUEST:
-                let serverAddress = await this.db.find(sender);
+                serverAddress = await this.db.find(sender);
                 if (!serverAddress) {
                     this.log.error(entity, `The server address for the ${this.uidKey} ${sender} could not be found`);
                     return;
@@ -56,6 +58,18 @@ export class BusinessLayer {
                 serverAddress += Environment.getValue(ENV_VARS.EVENT_MESSAGE_PATH, "/sendMessage");
                 serverAddress += `/${sender}`;
                 this.en.request(serverAddress, 'POST', { payload: content });
+                break;
+
+            case REST_EVENT_TYPES.DISCONNECT_REQUEST:
+                serverAddress = await this.db.find(sender);
+                if (!serverAddress) {
+                    this.log.error(entity, `The server address for the ${this.uidKey} ${sender} could not be found`);
+                    return;
+                }
+
+                serverAddress += Environment.getValue(ENV_VARS.EVENT_DISCONNECT_REQUEST, "/disconnect");
+                serverAddress += `/${sender}`;
+                this.en.request(serverAddress, 'POST', { payload: { reason: content.reason } });
                 break;
 
             case REST_EVENT_TYPES.PROBE:
@@ -78,7 +92,7 @@ export class BusinessLayer {
                 const result = JSON.parse(await this.en.get(address + '/probe'));
                 connectedClients += result.connectedClients;
                 details.push(result);
-            }catch (err) {
+            } catch (err) {
                 this.log.warn(entity, `Error probing server ${address}`);
             }
         }
