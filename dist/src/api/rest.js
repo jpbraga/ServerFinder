@@ -31,7 +31,7 @@ class RESTApi {
         this.app.use(express.json());
         this.app.post(`/sendMessage/:uid`, (req, res) => { this.sendMessageRequest(req, res); });
         this.app.put(`/broadcast`, (req, res) => { this.broadcast(req, res); });
-        this.app.put(`/disconnect`, (req, res) => { this.disconnectRequest(req, res); });
+        this.app.post(`/disconnect/:uid`, (req, res) => { this.disconnectRequest(req, res); });
         this.app.get(`/probe`, (req, res) => { this.probe(req, res); });
         this.app.get(`/health`, (req, res) => { this.healthCheck(req, res); });
     }
