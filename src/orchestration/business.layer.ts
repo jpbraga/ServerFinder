@@ -69,7 +69,7 @@ export class BusinessLayer {
 
                 serverAddress += Environment.getValue(ENV_VARS.EVENT_DISCONNECT_REQUEST, "/disconnect");
                 serverAddress += `/${sender}`;
-                this.en.request(serverAddress, 'POST', { payload: { reason: content.reason } });
+                this.en.request(serverAddress, 'POST', { reason: content.reason });
                 break;
 
             case REST_EVENT_TYPES.PROBE:

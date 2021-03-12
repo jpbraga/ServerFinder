@@ -66,7 +66,7 @@ class BusinessLayer {
                     }
                     serverAddress += environment_1.Environment.getValue(env_vars_1.ENV_VARS.EVENT_DISCONNECT_REQUEST, "/disconnect");
                     serverAddress += `/${sender}`;
-                    this.en.request(serverAddress, 'POST', { payload: { reason: content.reason } });
+                    this.en.request(serverAddress, 'POST', { reason: content.reason });
                     break;
                 case rest_event_types_1.REST_EVENT_TYPES.PROBE:
                     let result = yield this.probe();
