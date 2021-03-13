@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventNotification = void 0;
 const http = require("http");
+const https = require("https");
 const env_vars_1 = require("../util/consts/env.vars");
 const environment_1 = require("../util/environment");
 const log_services_1 = require("../util/log.services");
@@ -19,46 +20,53 @@ class EventNotification {
     constructor() {
         this.log = log_services_1.LogService.getInstnce();
     }
-    request(url, method, content) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const resourceURL = new URL(url);
-            this.log.debug(entity, `Requesting a ${method} at ${url}`);
-            return new Promise((resolve, reject) => {
-                if (!url) {
-                    this.log.error(entity, `The HOST for the ${method} method cannot be null`);
-                    reject(`The HOST for the ${method} method cannot be null`);
+    _typedRequest(request, resourceURL, method, content) {
+        return new Promise((resolve, reject) => {
+            let req = request.request({
+                method: method,
+                hostname: resourceURL.hostname,
+                path: resourceURL.pathname,
+                timeout: environment_1.Environment.getValue(env_vars_1.ENV_VARS.REST_REQUEST_TIMEOUT, 15000),
+                headers: {
+                    "Content-Type": "application/json"
                 }
-                let req = http.request({
-                    method: method,
-                    hostname: resourceURL.hostname,
-                    path: resourceURL.pathname,
-                    port: resourceURL.port,
-                    timeout: environment_1.Environment.getValue(env_vars_1.ENV_VARS.REST_REQUEST_TIMEOUT, 15000),
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                }, (res) => {
-                    resolve(res);
-                });
-                req.on('error', (e) => {
-                    this.log.error(entity, `Error requesting a ${method} at ${url} - ${e}`);
-                    reject(e.message);
-                });
-                if (content)
-                    req.write(JSON.stringify(content));
-                req.end();
+            }, (res) => {
+                resolve(res);
             });
+            req.on('error', (e) => {
+                reject(e.message);
+            });
+            if (content)
+                req.write(JSON.stringify(content));
+            req.end();
         });
     }
-    get(url) {
+    request(url, method, content) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (!url) {
+                this.log.error(entity, `The HOST for the ${method} method cannot be null`);
+                throw new Error(`The HOST for the ${method} method cannot be null`);
+            }
             const resourceURL = new URL(url);
-            this.log.debug(entity, `Requesting a GET at ${url}`);
+            this.log.debug(entity, `Requesting a ${method} at ${url}`);
+            switch (resourceURL.protocol) {
+                case "http:":
+                    this.log.info(entity, `Request to a insecure address`);
+                    return yield this._typedRequest(http, resourceURL, method, content);
+                    break;
+                case "https:":
+                    this.log.info(entity, `Request to a secure address`);
+                    return yield this._typedRequest(https, resourceURL, method, content);
+                    break;
+                default:
+                    throw new Error(`Protocol not identified in the provided url: ${url}`);
+                    break;
+            }
+        });
+    }
+    _typedGet(request, resourceURL) {
+        return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                if (!url) {
-                    this.log.error(entity, `The HOST for the GET method cannot be null`);
-                    reject(`The HOST for the GET method cannot be null`);
-                }
                 const options = {
                     hostname: resourceURL.hostname,
                     path: resourceURL.pathname,
@@ -69,18 +77,41 @@ class EventNotification {
                         "Content-Type": "application/json"
                     }
                 };
-                const req = http.request(options, res => {
+                const req = request.request(options, res => {
                     res.setEncoding('utf8');
                     res.on('data', d => {
                         resolve(d);
                     });
                 });
                 req.on('error', error => {
-                    this.log.error(entity, `Error requesting a GET at ${url} - ${error}`);
+                    this.log.error(entity, `Error requesting a GET at ${resourceURL.host} - ${error}`);
                     reject(error);
                 });
                 req.end();
             });
+        });
+    }
+    get(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!url) {
+                this.log.error(entity, `The HOST for the GET method cannot be null`);
+                throw new Error(`The HOST for the GET method cannot be null`);
+            }
+            const resourceURL = new URL(url);
+            this.log.debug(entity, `Requesting a GET at ${url}`);
+            switch (resourceURL.protocol) {
+                case "http:":
+                    this.log.info(entity, `Request to a insecure address`);
+                    return yield this._typedGet(http, resourceURL);
+                    break;
+                case "https:":
+                    this.log.info(entity, `Request to a secure address`);
+                    return yield this._typedGet(https, resourceURL);
+                    break;
+                default:
+                    throw new Error(`Protocol not identified in the provided url: ${url}`);
+                    break;
+            }
         });
     }
 }
