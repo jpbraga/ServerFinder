@@ -19,15 +19,30 @@ export class EventNotification {
             let req = request.request({
                 method: method,
                 hostname: resourceURL.hostname,
+                port: resourceURL.port,
                 path: resourceURL.pathname,
                 timeout: Environment.getValue(ENV_VARS.REST_REQUEST_TIMEOUT, 15000),
                 headers: {
                     "Content-Type": "application/json"
                 }
             }, (res) => {
-                resolve(res);
+                res.resume();
+                res.on('end', () => {
+                    if (!res.complete){
+                        const errMsg = 'The connection was terminated while the message was still being sent';
+                        this.log.error(entity, errMsg);
+                        reject(errMsg);
+                    }
+                });
+
+                res.setEncoding('utf8');
+                res.on('data', (chunk) => {
+                    resolve(chunk);
+                });
             });
+
             req.on('error', (e) => {
+                this.log.error(entity, `Error requesting a ${method} at ${resourceURL.hostname}:${resourceURL.port}${resourceURL.pathname} - ${e}`);
                 reject(e.message);
             });
             if (content) req.write(JSON.stringify(content));
