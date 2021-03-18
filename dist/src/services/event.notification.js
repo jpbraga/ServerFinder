@@ -25,6 +25,7 @@ class EventNotification {
             let req = request.request({
                 method: method,
                 hostname: resourceURL.hostname,
+                port: resourceURL.port,
                 path: resourceURL.pathname,
                 timeout: environment_1.Environment.getValue(env_vars_1.ENV_VARS.REST_REQUEST_TIMEOUT, 15000),
                 headers: {

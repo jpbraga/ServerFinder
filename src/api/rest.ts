@@ -55,14 +55,14 @@ export class RESTApi {
 
     private sendMessageRequest(req, res) {
         const validation = this.sendMessageRequestSchema(req, res);
-        if (!validation.isValid) res.send(validation);
+        if (!validation.isValid) res.status(validation.status).send(validation);
         else {
             let payload = {
                 payload: req.body.payload
             };
             payload[this.uidKey] = req.params.uid;
             this.notifyEventListeners(REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, payload);
-            res.send(validation);
+            res.status(validation.status).send(validation);
         }
     }
 
@@ -75,7 +75,7 @@ export class RESTApi {
 
     private disconnectRequest(req, res) {
         const validation = this.disconnectRequestSchema(req, res);
-        if (!validation.isValid) res.send(validation);
+        if (!validation.isValid) res.status(validation.status).send(validation);
         else {
             let payload = {
                 payload: req.body
@@ -86,7 +86,7 @@ export class RESTApi {
             }
             payload[this.uidKey] = req.params.uid;
             this.notifyEventListeners(REST_EVENT_TYPES.DISCONNECT_REQUEST, payload);
-            res.send(validation);
+            res.status(validation.status).send(validation);
         }
     }
 
@@ -99,7 +99,7 @@ export class RESTApi {
 
     public broadcast(req, res) {
         const validation = this.broadcastSchema(req, res);
-        if (!validation.isValid) res.send(validation);
+        if (!validation.isValid) res.status(validation.status).send(validation);
         else {
             let data = JSON.parse(req.body.payload);
             let payload = {
@@ -107,12 +107,12 @@ export class RESTApi {
             }
             payload[this.uidKey] = data[this.uidKey];
             this.notifyEventListeners(REST_EVENT_TYPES.BROADCAST, payload);
-            res.send(validation);
+            res.status(validation.status).send(validation);
         }
     }
 
     private healthCheck(req, res) {
-        res.send(200);
+        res.status(200).send('OK');
     }
 
     private async probe(req, res) {

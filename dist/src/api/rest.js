@@ -61,14 +61,14 @@ class RESTApi {
     sendMessageRequest(req, res) {
         const validation = this.sendMessageRequestSchema(req, res);
         if (!validation.isValid)
-            res.send(validation);
+            res.status(validation.status).send(validation);
         else {
             let payload = {
                 payload: req.body.payload
             };
             payload[this.uidKey] = req.params.uid;
             this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.SEND_MESSAGE_REQUEST, payload);
-            res.send(validation);
+            res.status(validation.status).send(validation);
         }
     }
     disconnectRequestSchema(req, res) {
@@ -80,7 +80,7 @@ class RESTApi {
     disconnectRequest(req, res) {
         const validation = this.disconnectRequestSchema(req, res);
         if (!validation.isValid)
-            res.send(validation);
+            res.status(validation.status).send(validation);
         else {
             let payload = {
                 payload: req.body
@@ -91,7 +91,7 @@ class RESTApi {
             }
             payload[this.uidKey] = req.params.uid;
             this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.DISCONNECT_REQUEST, payload);
-            res.send(validation);
+            res.status(validation.status).send(validation);
         }
     }
     broadcastSchema(req, res) {
@@ -103,7 +103,7 @@ class RESTApi {
     broadcast(req, res) {
         const validation = this.broadcastSchema(req, res);
         if (!validation.isValid)
-            res.send(validation);
+            res.status(validation.status).send(validation);
         else {
             let data = JSON.parse(req.body.payload);
             let payload = {
@@ -111,11 +111,11 @@ class RESTApi {
             };
             payload[this.uidKey] = data[this.uidKey];
             this.notifyEventListeners(rest_event_types_1.REST_EVENT_TYPES.BROADCAST, payload);
-            res.send(validation);
+            res.status(validation.status).send(validation);
         }
     }
     healthCheck(req, res) {
-        res.send(200);
+        res.status(200).send('OK');
     }
     probe(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
